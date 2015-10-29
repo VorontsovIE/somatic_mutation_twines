@@ -110,7 +110,7 @@ module PerfectosAPE
       @snv_name ||= SNVName.new(variant_id)
     end
     extend Forwardable
-    def_delegators :snv_name, :chromosome, :sample, :substitution
+    def_delegators :snv_name, :chromosome, :sample_name, :substitution
     def_delegator :snv_name, :position, :mutation_genomic_position
 
     # Always takes the strongest site among two alleles
