@@ -21,3 +21,32 @@ Dir.glob('source_data/SNVs/*.txt').sort.each do |snvs_fn|
   end
   task :collect_sites => "collect_sites:#{cancer_type}"
 end
+
+desc 'Collect mutations and sites for Pan-cancer'
+task :pan_cancer do
+  pan_cancer_sites = "results/sites/PanCancer.txt"
+  rm pan_cancer_sites  if File.exist?(pan_cancer_sites)
+  touch pan_cancer_sites
+
+  pan_cancer_mutations = "source_data/SNVs/PanCancer.txt"
+  rm pan_cancer_mutations  if File.exist?(pan_cancer_mutations)
+  touch pan_cancer_mutations
+
+  Dir.glob('source_data/SNVs/*.txt').sort.map{|snvs_fn|
+    File.basename(snvs_fn, '.txt')
+  }.each do |cancer_type|
+    sh 'cat', "source_data/SNVs/#{cancer_type}.txt", 'a', out: pan_cancer_mutations
+    sh 'cat', "results/sites/#{cancer_type}.txt", 'a', out: pan_cancer_sites
+  end
+end
+
+desc 'Collect cancer SNVs from different folder'
+task :collect_SNVs do
+  Dir.glob('/home/ilya/cancerSNVs_Alexandrov/results/all_introns/SNVs/Alexandrov/*').select{|fn|
+    File.directory?(fn)
+  }.map{|fn|
+    File.basename(fn)
+  }.each do |cancer_type|
+    cp File.join('/home/ilya/cancerSNVs_Alexandrov/results/all_introns/SNVs/Alexandrov/', cancer_type, 'cancer.txt'), File.join('source_data/SNVs', "#{ cancer_type.gsub(/[ -]/,'') }.txt")
+  end
+end
