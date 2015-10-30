@@ -12,7 +12,9 @@ EnsemblMappings = Struct.new(:ensg, :enst, :hgnc_symbol, :description, :uniprot_
 end
 
 def load_hgnc_by_ensembl(mapping_filename)
-  EnsemblMappings.each_in_file(mapping_filename).group_by(&:ensg).map{|ensg, infos|
+  result = EnsemblMappings.each_in_file(mapping_filename).group_by(&:ensg).map{|ensg, infos|
     [ensg, infos.map(&:hgnc_symbol).uniq.compact]
   }.to_h
+  result.default_proc = ->(h,k){ h[k] = [] }
+  result
 end

@@ -26,12 +26,25 @@ Twine = Struct.new(:chromosome, :interval, :sites, :ensembl_gene_ids) do
   def samples
     sites.map(&:sample_name).uniq
   end
+
+  def num_mutations
+    mutations.size
+  end
+
+  def num_samples
+    samples.size
+  end
+
+  def length
+    interval.to_interval_set.total_length
+  end
   
   def to_s
     '<' + \
     [
-      "chr#{chromosome}:#{interval.integer_points.first}..#{interval.integer_points.last}", 
-      "#{mutations.size} mutations: " '{' + mutations.join(', ') + '}', 
+      "chr#{chromosome}:#{interval.integer_points.first}-#{interval.integer_points.last}", 
+      "#{num_samples} samples", 
+      "#{num_mutations} mutations: " '{' + mutations.join(', ') + '}', 
       '{' + involved_families.join('; ') + '}',
     ].join('; ') + \
     '>'
