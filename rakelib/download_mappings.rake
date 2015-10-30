@@ -14,8 +14,10 @@ query_xml = <<-EOS
 </Query>
 EOS
 
+directory 'source_data'
+
 desc 'Download and prepare Ensembl to HGNC/to Uniprot mapping (Ensembl, GRCh37.p13)'
 task :download_mappings => 'source_data/EnsemblToHGNC_GRCh37.p13.tsv'
-file 'source_data/EnsemblToHGNC_GRCh37.p13.tsv' do
+file 'source_data/EnsemblToHGNC_GRCh37.p13.tsv' => 'source_data' do
   sh 'wget', '-O', 'source_data/EnsemblToHGNC_GRCh37.p13.tsv', "http://feb2014.archive.ensembl.org/biomart/martservice?query=#{query_xml}"
 end
