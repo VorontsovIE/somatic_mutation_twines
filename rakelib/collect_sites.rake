@@ -50,3 +50,13 @@ task :collect_SNVs do
     cp File.join('/home/ilya/cancerSNVs_Alexandrov/results/all_introns/SNVs/Alexandrov/', cancer_type, 'cancer.txt'), File.join('source_data/SNVs', "#{ cancer_type.gsub(/[ -]/,'') }.txt")
   end
 end
+
+directory 'source_data/motif_collection/'
+directory 'source_data/motif_collection_thresholds/'
+desc 'Collect motifs'
+task :collect_motifs => ['source_data/motif_collection/', 'source_data/motif_collection_thresholds/']do
+  `cp /home/ilya/diHOCOMOCO/final_bundle/HUMAN/mono/pwm/* source_data/motif_collection/`
+  ` ls source_data/motif_collection/* | grep -P '.[S|D].pwm$' |xargs rm`
+  `cp /home/ilya/diHOCOMOCO/final_bundle/HUMAN/mono/thresholds/* source_data/motif_collection_thresholds/`
+  ` ls source_data/motif_collection_thresholds/* | grep -P '.[S|D].thr$' |xargs rm`
+end
