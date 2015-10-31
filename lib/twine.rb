@@ -45,7 +45,7 @@ Twine = Struct.new(:chromosome, :interval, :sites, :ensembl_gene_ids) do
       "chr#{chromosome}:#{interval.integer_points.first}-#{interval.integer_points.last}", 
       "#{num_samples} samples", 
       "#{num_mutations} mutations: " '{' + mutations.join(', ') + '}', 
-      '{' + involved_families.join('; ') + '}',
+      # '{' + involved_families.join('; ') + '}',
     ].join('; ') + \
     '>'
   end
