@@ -34,9 +34,11 @@ task :pan_cancer do
 
   Dir.glob('source_data/SNVs/*.txt').sort.map{|snvs_fn|
     File.basename(snvs_fn, '.txt')
+  }.reject{|cancer_type|
+    cancer_type == 'PanCancer'
   }.each do |cancer_type|
-    sh 'cat', "source_data/SNVs/#{cancer_type}.txt", 'a', out: pan_cancer_mutations, {}
-    sh 'cat', "results/sites/#{cancer_type}.txt", 'a', out: pan_cancer_sites, {}
+    `cat 'source_data/SNVs/#{cancer_type}.txt' >> #{pan_cancer_mutations}`
+    `cat 'results/sites/#{cancer_type}.txt' >> #{pan_cancer_sites}`
   end
 end
 
