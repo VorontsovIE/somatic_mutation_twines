@@ -8,8 +8,6 @@ require 'yaml'
 require 'ensembl_mappings'
 require 'twine'
 
-raise 'Specify cancer type'  unless cancer_type = ARGV[0]
-
 # length of regulatory region of a gene
 def read_gene_length(filename)
   File.readlines(filename).map(&:chomp).map{|l|
@@ -19,45 +17,64 @@ def read_gene_length(filename)
   }.to_h
 end
 
+
+raise 'Specify twines filename'  unless twines_filename = ARGV[0]
 length_by_gene = read_gene_length('regulatory_gene_length.tsv')
-# full_length_by_gene = read_gene_length('gene_length.tsv')
+twines_by_gene = YAML.load_file(twines_filename)
 
-twines_by_gene = YAML.load_file("results/twines/#{cancer_type}.yaml")
 
-# puts twines_by_gene.size
+HgncByEnsembl = load_hgnc_by_ensembl('source_data/EnsemblToHGNC_GRCh37.p13.tsv')
+protein_coding_genes = File.readlines('source_data/allhgnc_protein_coding.txt').map(&:chomp).to_set
+hgncs_all = HgncByEnsembl.values.flatten.uniq.to_set # & protein_coding_genes
+# oncogenes = File.readlines('source_data/сancer_genes_lists/allonco_20130923_reduced.csv')
+#   .map{|l|
+#     l.chomp.split
+#   }.map{|gene, num_evidences|
+#     [gene, num_evidences.to_i]
+#   }
+# reliable_oncogenes = oncogenes
+#   .select{|gene, num_evidences|
+#     num_evidences >= 1
+#   }.map{|gene, num_evidences|
+#     gene
+#   }.to_set
+reliable_oncogenes = File.readlines('source_data/сancer_genes_lists/onco_gathered.txt').map(&:chomp).to_set
 
-twines_by_gene.sort_by{|gene, twines|
-  # twines.flat_map(&:samples).uniq.size.to_f / length_by_gene[gene]
-  twines.size.to_f / length_by_gene[gene]
-  # twines.map(&:num_samples).inject(0.0, &:+) / length_by_gene[gene]
-  # twines.flat_map(&:mutations).size.to_f / twines.size
-  # twines.flat_map(&:mutations).size.to_f / twines.map(&:length).inject(0.0, &:+)
-  # twines.map(&:length).inject(0.0, &:+) / length_by_gene[gene]
-  # twines.flat_map{|twine| twine.mutations.size.to_f / twine.length }.max
-  # twines.flat_map(&:mutations).size / twines.flat_map(&:length).inject(&:+).to_f
-  # twines.map(&:length).max
-  # twines.map(&:num_samples).max # most useful
-  # twines.map(&:num_mutations).max # biased for kataegis
-}.each{|gene, twines|
-  total_samples = twines.flat_map(&:samples).uniq.size
-  total_samples_distinct = twines.flat_map(&:samples).size
-  total_mutations = twines.flat_map(&:mutations).uniq.size
-  puts "#{gene} (#{length_by_gene[gene]} bp) -- #{twines.size} twines -- #{total_mutations} mutations -- #{ total_samples } (#{total_samples_distinct}) samples (distinct by twine)"
-  puts twines
-  puts "num bp per twine #{(length_by_gene[gene].to_f / twines.size).round(1) }"
-  puts '---------------------------------'
+known_oncogenes = reliable_oncogenes & hgncs_all
+
+
+
+sorted_genes_with_twines = twines_by_gene.sort_by{|gene, twines|
+  twines.map(&:num_mutations).max # most useful (place 1)
+  # twines.map(&:num_samples).max # useful (place 2)
+}.reverse
+
+puts '#' + [
+  'Gene',
+  'Known oncogene',
+  'Num twines',
+  'Regulatory length',
+  'Max mutations in twine',
+  'Max unique mutations in twine',
+  'Max samples in twine',
+  'Max twine length',
+  'Max density of mutations in twine',
+  'Total num of mutations',
+  'Total length of twines',
+].join("\t")
+
+sorted_genes_with_twines.each{|gene, twines|
+  puts [
+    gene,
+    known_oncogenes.include?(gene) ? 1 : 0,
+    twines.size,
+    length_by_gene[gene],
+    twines.map(&:num_mutations).max,
+    twines.map(&:num_unique_mutations).max,
+    twines.map(&:num_samples).max,
+    twines.map(&:length).max,
+    twines.map(&:mutation_density).max,
+    twines.map(&:num_mutations).inject(0, &:+),
+    twines.map(&:length).inject(0, &:+),
+  ].join("\t")
 }
-
-all_twines = twines_by_gene.flat_map{|gene, twines| twines }
-all_twines_ensembl = all_twines.select{|twine| !twine.ensembl_gene_ids.empty? }
-all_twines_hgnc = all_twines.select{|twine| !twine.hgnc_names.empty? }
-
-
-puts
-puts({
-  twines_by_gene: twines_by_gene.size,
-  multitwines_by_gene: twines_by_gene.count{|gene, twines| twines.size > 1 },
-  twines: all_twines.size,
-  twines_ensembl: all_twines_ensembl.size,
-  twines_hgnc: all_twines_hgnc.size,
-})

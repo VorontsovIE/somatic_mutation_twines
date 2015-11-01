@@ -35,6 +35,14 @@ Twine = Struct.new(:chromosome, :interval, :sites, :ensembl_gene_ids) do
     samples.size
   end
 
+  def num_unique_mutations
+    sites.map(&:mutation_genomic_position).uniq.size
+  end
+
+  def mutation_density
+    num_mutations.to_f / length
+  end
+
   def length
     interval.to_interval_set.total_length
   end
